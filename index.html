@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Ứng Dụng Quản Lý Cá Nhân</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 20px; color: #333; }
+    .container { max-width: 700px; margin: 0 auto; }
+    .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; color: #1a73e8; }
+    input, select, button { padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
+    input[type="text"], input[type="number"], input[type="date"], select { width: calc(100% - 24px); }
+    button { background: #1a73e8; color: white; border: none; cursor: pointer; width: 100%; font-weight: bold; }
+    button:hover { background: #1557b0; }
+    ul { list-style-type: none; padding: 0; }
+    li { background: #f8f9fa; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .income { color: #2e7d32; font-weight: bold; }
+    .expense { color: #c62828; font-weight: bold; }
+    .btn-delete { background: #d32f2f; width: auto; padding: 5px 10px; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- KHỐI QUẢN LÝ TÀI CHÍNH -->
+    <div class="card">
+      <h2>1. Quản Lý Tài Chính</h2>
+      <h3>Số dư hiện tại: <span id="balance">0</span> VNĐ</h3>
+      
+      <input type="text" id="fin-desc" placeholder="Mô tả (ví dụ: Lương tháng, Ăn sáng)">
+      <input type="number" id="fin-amount" placeholder="Số tiền (VNĐ)">
+      <select id="fin-type">
+        <option value="income">Thu nhập (+)</option>
+        <option value="expense">Chi tiêu (-)</option>
+      </select>
+      <button onclick="addTransaction()">Thêm Giao Dịch</button>
+
+      <ul id="fin-list"></ul>
+    </div>
+
+    <!-- KHỐI QUẢN LÝ LỊCH TRÌNH -->
+    <div class="card">
+      <h2>2. Lịch Trình Công Việc</h2>
+      <input type="text" id="task-desc" placeholder="Tên công việc">
+      <input type="date" id="task-date">
+      <button onclick="addTask()">Thêm Công Việc</button>
+
+      <ul id="task-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    // Dữ liệu ban đầu lấy từ bộ nhớ trình duyệt (localStorage)
+    let transactions = JSON.parse(localStorage.getItem('my_finances')) || [];
+    let tasks = JSON.parse(localStorage.getItem('my_tasks')) || [];
+
+    // --- XỬ LÝ TÀI CHÍNH ---
+    function renderFinance() {
+      const list = document.getElementById('fin-list');
+      const balanceEl = document.getElementById('balance');
+      list.innerHTML = '';
+      let total = 0;
+
+      transactions.forEach((item, index) => {
+        const amount = Number(item.amount);
+        if (item.type === 'income') total += amount;
+        else total -= amount;
+
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>${item.desc}</span>
+          <span class="${item.type}">${item.type === 'income' ? '+' : '-'}${amount.toLocaleString()} VNĐ</span>
+          <button class="btn-delete" onclick="deleteTransaction(${index})">Xóa</button>
+        `;
+        list.appendChild(li);
+      });
+
+      balanceEl.innerText = total.toLocaleString();
+      localStorage.setItem('my_finances', JSON.stringify(transactions));
+    }
+
+    function addTransaction() {
+      const desc = document.getElementById('fin-desc').value;
+      const amount = document.getElementById('fin-amount').value;
+      const type = document.getElementById('fin-type').value;
+
+      if (!desc || !amount) return alert('Vui lòng nhập đầy đủ mô tả và số tiền!');
+
+      transactions.push({ desc, amount, type });
+      document.getElementById('fin-desc').value = '';
+      document.getElementById('fin-amount').value = '';
+      renderFinance();
+    }
+
+    function deleteTransaction(index) {
+      transactions.splice(index, 1);
+      renderFinance();
+    }
+
+    // --- XỬ LÝ LỊCH TRÌNH ---
+    function renderTasks() {
+      const list = document.getElementById('task-list');
+      list.innerHTML = '';
+
+      tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span><strong>[${task.date}]</strong> ${task.desc}</span>
+          <button class="btn-delete" onclick="deleteTask(${index})">Xóa</button>
+        `;
+        list.appendChild(li);
+      });
+
+      localStorage.setItem('my_tasks', JSON.stringify(tasks));
+    }
+
+    function addTask() {
+      const desc = document.getElementById('task-desc').value;
+      const date = document.getElementById('task-date').value;
+
+      if (!desc || !date) return alert('Vui lòng nhập công việc và chọn ngày!');
+
+      tasks.push({ desc, date });
+      document.getElementById('task-desc').value = '';
+      document.getElementById('task-date').value = '';
+      renderTasks();
+    }
+
+    function deleteTask(index) {
+      tasks.splice(index, 1);
+      renderTasks();
+    }
+
+    // Chạy hiển thị lần đầu khi mở trang
+    renderFinance();
+    renderTasks();
+  </script>
+</body>
+</html>
